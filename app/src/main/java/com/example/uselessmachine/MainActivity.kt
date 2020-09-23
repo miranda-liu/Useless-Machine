@@ -3,6 +3,8 @@ package com.example.uselessmachine
 import android.graphics.Color
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +15,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        progressBar_main_countdown.visibility = View.GONE
+        text_main_look_busy.visibility = View.GONE
 
         // View.OnClickListener
             // you know it's an interface through looking at the API
@@ -85,38 +89,56 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onTick(millisRemaining: Long) {
-                    if(flashes % 10 == 0){
+                    Log.d("countdown", "$lastFlashTime")
+                    button_main_self_destruct.text = (lastFlashTime/ 1000).toString()
+                    if(flashes % 5 == 0 && timeBtwnFlashes >= 2){
                         timeBtwnFlashes/=2
                     }
-                    if(millisRemaining.toInt() % timeBtwnFlashes == 0) {
+                    if(lastFlashTime.toInt() % timeBtwnFlashes == 0) {
                         flashes++
                         if (!isRed) {
                             layout_main.setBackgroundColor(Color.rgb(255, 0, 0))
                             isRed = true
-                        } else if (isRed) {
+                        }
+                        else if (isRed) {
                             layout_main.setBackgroundColor(Color.rgb(255, 255, 255))
                             isRed = false
+                            }
                         }
-                        if (lastFlashTime >= 1000L) {
-                            button_main_self_destruct.text = (millisRemaining.toInt() / 1000).toString()
-                        }
-                        lastFlashTime -= 250
-                        }
+                    lastFlashTime -= 250
                 }
             }
             destructTimer.start()
             button_main_self_destruct.isEnabled = false
             }
+
+        button_main_look_busy.setOnClickListener {
+            button_main_look_busy.visibility = View.INVISIBLE
+            switch_main_useless.visibility = View.INVISIBLE
+            button_main_self_destruct.visibility = View.INVISIBLE
+            progressBar_main_countdown.visibility = View.VISIBLE
+            text_main_look_busy.visibility = View.VISIBLE
+            val lookBusyTimer = object: CountDownTimer(10000, 250){
+                private var timeRemaining = 10000L
+                override fun onFinish(){
+                    cancel()
+                    progressBar_main_countdown.visibility = View.INVISIBLE
+                    text_main_look_busy.visibility = View.INVISIBLE
+                    button_main_look_busy.visibility = View.VISIBLE
+                    switch_main_useless.visibility = View.VISIBLE
+                    button_main_self_destruct.visibility = View.VISIBLE
+                }
+
+                override fun onTick(millisRemaining:Long) {
+                    if(timeRemaining.toInt() % 1000 == 0) {
+                        progressBar_main_countdown.progress = timeRemaining.toInt() / 1000
+                        text_main_look_busy.text = "${(timeRemaining.toInt() / 1000).toString()} /10 files loading"
+                    }
+                    timeRemaining -= 250L
+                }
+            }
+            progressBar_main_countdown.progress = 10
+            lookBusyTimer.start()
+        }
     }
 }
-
-        // switch
-            // randomize the time so it doesn't always turn off at a fixed interval
-            // if the switch is manually turned off early, we cancel the timer (so if it gets turned back on,
-            // we don't get multiple times running simultaneously
-        // self-destruct button
-            // 10 second countdown timer to display on the button
-            // when the timer is up, call finish () to close activity
-            // lock out the button by setting its enable attribute to false (make button no longer clickable)
-            // get screen to flash a different color at an interval
-            // get screen to flash faster the less time is remaining in the countdown
